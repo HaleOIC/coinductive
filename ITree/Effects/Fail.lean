@@ -1,9 +1,9 @@
 import ITree.Effect
 import ITree.Definition
 import ITree.Exec
+import ITree.Eval
 
 namespace ITree.Effects
-open ITree.Exec
 
 def failE : Effect.{u} where
   I := ULift String
@@ -12,6 +12,13 @@ def failE : Effect.{u} where
 def FailE.fail {α : Type u} {E} [failE -< E] (s : String) : ITree.{u} E α :=
   .trigger (failE) (ULift.up s) >>= nofun
 export FailE (fail)
+
+def FailE.assert {E} [failE -< E] (P : Prop) [Decidable P] : ITree.{u} E PUnit :=
+  if P then return ⟨⟩ else fail s!"assertion failed"
+export FailE (assert)
+
+section Exec
+open ITree.Exec
 
 def failEH : SEHandler failE PUnit where
   handle i s p := True
@@ -25,3 +32,13 @@ theorem exec_fail {α : Type u} {GE : Effect.{u}} {GR σ p q s}
   simp only [bind_assoc]
   apply exec.trigger failEH.toEHandler
   simp [failEH]
+
+end Exec
+
+section Eval
+open ITree.Eval
+
+instance failMH {m} [Monad m] [MonadExceptOf String m] : SMHandler failE m where
+  handle i := throw i.down
+
+end Eval

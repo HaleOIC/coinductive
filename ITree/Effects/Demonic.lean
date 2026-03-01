@@ -1,25 +1,29 @@
 import ITree.Effect
 import ITree.Definition
+import ITree.Eval
 import ITree.Exec
 
 namespace ITree.Effects
-open ITree.Exec
 
 def demonicE (α : Type u) : Effect.{u} where
-  I := α → Prop
-  O p := {a // p a}
+  I := ((p : α → Prop) × (DecidablePred p) × (Inhabited {x : α // p x}))
+  O p := {a // p.1 a}
 
-def DemonicE.choose {α : Type u} {E : Effect.{u}} [demonicE α -< E] (p : α → Prop) : ITree E {a // p a} :=
-  .trigger (demonicE α) p
+def DemonicE.choose {α : Type u} {E : Effect.{u}} [demonicE α -< E] (p : α → Prop) [hp : DecidablePred p] [hi : Inhabited {x : α // p x}] : ITree E {a // p a} :=
+  .trigger (demonicE α) ⟨p, hp, hi⟩
 export DemonicE (choose)
 
+section exec
+open ITree.Exec
+
 def demonicEH (α : Type _) : SEHandler (demonicE α) PUnit where
-  handle i s p := ∃ x, ∃ (h : i x), p ⟨_, h⟩ s
+  handle i s p := ∃ x, ∃ (h : i.1 x), p ⟨_, h⟩ s
   handle_mono := by grind
 
 theorem exec_choose {α : Type u} {GE : Effect.{u}} {GR σ p q s}
-    {k : {x : α // q x} → ITree GE GR} x h
-    [demonicE α -< GE] (eh : EHandler GE GE GR σ) [hin : InEH (demonicEH α).toEHandler eh]
+    {k : {x : α // q x} → ITree GE GR} x h [demonicE α -< GE]
+    [DecidablePred q] [Inhabited {x : α // q x}]
+    (eh : EHandler GE GE GR σ) [hin : InEH (demonicEH α).toEHandler eh]
     : (exec eh (k ⟨x, h⟩) s p) →
       exec eh (choose q >>= k) s p := by
   intro he; unfold choose
@@ -27,3 +31,13 @@ theorem exec_choose {α : Type u} {GE : Effect.{u}} {GR σ p q s}
   apply exec.trigger (demonicEH α).toEHandler
   simp_all [demonicEH]
   exists ?_, ?_ <;> try assumption
+
+end exec
+
+section eval
+open ITree.Eval
+
+instance demonicMH [Monad m] : SMHandler (demonicE α) m where
+  handle i := return i.2.2.default
+
+end eval

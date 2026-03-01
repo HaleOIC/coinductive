@@ -1,9 +1,9 @@
 import ITree.Effect
 import ITree.Definition
+import ITree.Eval
 import ITree.Exec
 
 namespace ITree.Effects
-open ITree.Exec
 
 def stateE (α : Type u) : Effect.{u} where
   I := (α → α)
@@ -26,6 +26,9 @@ instance [stateE α -< E] : MonadStateOf α (ITree E) where
   get := StateE.get
   set := StateE.set
   modifyGet := StateE.modifyGet
+
+section exec
+open ITree.Exec
 
 def stateEH (α : Type u) : SEHandler (stateE α) α where
   handle i s p := p s (i s)
@@ -62,3 +65,11 @@ theorem exec_set {α : Type u} {GE : Effect.{u}} GR σ p s (s' : α)
     [stateE α -< GE] (eh : EHandler GE GE GR σ) [hin : InEH (stateEH α).toEHandler eh]
     : exec eh (k ⟨⟩) (hin.putState s' s) p →
       exec eh (set s' >>= k) s p := exec_stateE_set GR σ p s s' eh
+end exec
+
+section eval
+open ITree.Eval
+
+instance stateMH {m α} [Monad m] [MonadStateOf α m] : SMHandler (stateE α) m where
+  handle i := do let s ← get; set (i s); return s
+end eval

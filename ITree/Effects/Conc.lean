@@ -1,9 +1,10 @@
 import ITree.Effect
 import ITree.Definition
 import ITree.Exec
+import ITree.Eval
 
 namespace ITree.Effects
-open Lean.Order ITree.Exec
+open Lean.Order
 
 inductive ForkResult : Type u
 | parent | child
@@ -55,38 +56,58 @@ theorem yieldAfter_mono [concE -< E] α [PartialOrder α] (f : α → ITree E R)
   · apply hf
   · apply monotone_const
 
-structure ConcState GE GR where
+structure ConcState (T : Type u) where
   curr : Nat
-  pool : List (Option (ITree GE GR))
+  pool : List (Option T)
   curr_in_pool : curr < pool.length
   curr_is_none : pool[curr] = none
 
 attribute [grind! .] ConcState.curr_in_pool
 
-def ConcState.add {GE GR} (s : ConcState GE GR) (t : ITree GE GR) : ConcState GE GR where
+def ConcState.new {T} : ConcState T where
+  curr := 0
+  pool := [none]
+  curr_in_pool := by grind
+  curr_is_none := by grind
+
+def ConcState.add {T} (s : ConcState T) (t : T) : ConcState T where
   curr := s.curr
   pool := s.pool ++ [some t]
   curr_in_pool := by grind
   curr_is_none := by grind [curr_is_none]
 
-def ConcState.yield {GE GR} (tp : List (Option (ITree GE GR))) (i : Nat) (h : i < tp.length) : ConcState GE GR where
+def ConcState.yield {T} (tp : List (Option T)) (i : Nat) (h : i < tp.length) : ConcState T where
   curr := i
   pool := tp.set i none
   curr_in_pool := by grind
   curr_is_none := by grind
 
 @[simp]
-theorem ConcState.yield_id {GE GR} (s : ConcState GE GR) t h :
+theorem ConcState.yield_id {T} (s : ConcState T) t h :
   yield (s.pool.set s.curr t) s.curr h = s := by
   simp [yield]
   congr
   grind [List.set_getElem_self, curr_is_none]
 
 @[simp]
-def ConcState.next {GE GR} (tp : List (Option (ITree GE GR))) (C : ITree GE GR → ConcState GE GR → Prop) : Prop :=
+def ConcState.next {T} (tp : List (Option T)) (C : T → ConcState T → Prop) : Prop :=
   ∃ i t, ∃ (h : i < tp.length), tp[i] = some t ∧ C t (yield tp i h)
 
-def concEH {GE GR} : EHandler concE GE GR (ConcState GE GR) where
+/- n ensures that we stop after going one round through tp -/
+def ConcState.next_roundrobin {T} (n : Nat) (curr : Nat) (tp : List (Option T)) (h : n ≤ tp.length) : Option (T × ConcState T) :=
+  match n with
+  | 0 => none
+  | n+1 =>
+    let c := (curr + 1) % tp.length;
+    have := @Nat.mod_lt (curr + 1) tp.length
+    match tp[c] with
+    | none => next_roundrobin n c tp (by grind)
+    | some t => (t, yield tp c (by grind))
+
+section Exec
+open ITree.Exec
+
+def concEH {GE GR} : EHandler concE GE GR (ConcState (ITree GE GR)) where
   handle i s k p :=
     match i with
     | .fork => p (k .parent) (s.add (k .child))
@@ -131,3 +152,30 @@ theorem exec_yield_same {GE : Effect.{u}} {GR σ}
   apply exec_yield_yielded ((InEH.getState concEH eh s).curr)
   · rw [List.getElem_set_self]; grind
   simp [he]
+end Exec
+
+section Eval
+open ITree.Eval
+
+instance concMH {m T} [Monad m] [MonadExceptOf String m] [MonadStateOf (ConcState T) m] : MHandler concE T m where
+  handle i k :=
+  match i with
+  | .fork => do modifyThe (ConcState T) (λ s => s.add (k .child)); return k .parent
+  | .yield => do
+    let s ← get;
+    let s := s.add (k ⟨⟩)
+    let some s' := ConcState.next_roundrobin (s.pool.length)
+      s.curr s.pool (by grind)
+      | throw "no thread to schedule"
+    set (s'.2)
+    return s'.1
+  | .kill => do
+    let s ← get;
+    let some s' := ConcState.next_roundrobin (s.pool.length)
+      s.curr s.pool (by grind)
+      | throw "no thread to schedule"
+    set (s'.2)
+    return s'.1
+
+
+end Eval

@@ -31,6 +31,7 @@ instance (E : Effect.{u}) (R : Type u) : QPF (ITreeF E R) where
   pack_unpack := by rintro _ (⟨⟨⟩, _⟩ | ⟨⟨⟩⟩) <;> simp <;> funext x <;> cases x
 
 abbrev ITree (E : Effect.{u}) (R : Type u) : Type u := CoInd (ITreeF E R)
+abbrev ITreeN (E : Effect.{u}) (R : Type u) (n : Nat) : Type u := CoIndN (ITreeF E R) n
 
 variable {E : Effect.{u}} {R : Type u}
 

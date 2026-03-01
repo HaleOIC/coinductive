@@ -2,11 +2,27 @@ import HeapLang.Lang
 import HeapLang.Semantics
 import HeapLang.Notation
 
-open ITree ITree.Effects ITree.Exec
+open ITree ITree.Effects ITree.Exec ITree.Eval
 
 namespace HeapLang
 
-/-- TODO: have a better simp set -/
+/-- info: some (HeapLang.Val.lit (HeapLang.BaseLit.int 2)) -/
+#guard_msgs in
+#eval evalN heaplangM 10000 hl(#1 + #1).denote
+
+/-- info: some (HeapLang.Val.lit (HeapLang.BaseLit.unit)) -/
+#guard_msgs in
+#eval evalN heaplangM 10000 hl(let x := ref(#0); x ← #1; assert(!x = #1)).denote
+
+/-- info: some (HeapLang.Val.lit (HeapLang.BaseLit.unit)) -/
+#guard_msgs in
+#eval evalN heaplangM 10000 hl(
+  let x := ref(#0);
+  fork(x ← (!x + #1));
+  x ← (!x + #1);
+  assert(!x = #2)).denote
+
+/- TODO: have a better simp set -/
 
 example s :
   exec heaplangEH hl(#1 + #1).denote s λ t _ => t = return (.lit $ .int 2) := by

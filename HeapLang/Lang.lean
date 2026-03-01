@@ -22,7 +22,11 @@ instance : Std.LawfulEqOrd Loc where
     intros l₁ l₂; unfold compare; unfold instOrdLoc; simp;
     intros h; ext; assumption
 
-def Loc.offset (l : Loc) (i : Int) : Loc := ⟨l.n + i⟩
+instance : HAdd Loc Int Loc where
+  hAdd l i := ⟨l.n + i⟩
+
+instance : Zero Loc where
+  zero := ⟨0⟩
 
 @[ext]
 structure ProphId where

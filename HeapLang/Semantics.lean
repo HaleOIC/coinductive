@@ -33,25 +33,35 @@ def Val.injR! [failE -< E] : Val → ITree E Val
   | .injR v => return v
   | x => fail s!"{reprStr x} is not InjR"
 
-abbrev heaplangE := concE ⊕ₑ heapE Loc Val ⊕ₑ failE ⊕ₑ demonicE (List Loc)
+abbrev heaplangE := concE ⊕ₑ heapE Loc Val ⊕ₑ failE ⊕ₑ demonicE Loc
 
-structure HeaplangState (GE GR) where
-  tp : ConcState GE GR
+structure HeaplangState T where
+  tp : ConcState T
   heap : heapE.T Loc Val
 
 @[simp]
-def HeaplangStateIso GE GR : Iso (ConcState GE GR × heapE.T Loc Val × PUnit × PUnit) (HeaplangState GE GR) where
+def HeaplangStateIso T : Iso (ConcState T × heapE.T Loc Val × PUnit × PUnit) (HeaplangState T) where
   toFun x := ⟨x.1, x.2.fst⟩
   invFun x := ⟨x.tp, x.heap, ⟨⟩, ⟨⟩⟩
   left_inv := by simp [Function.LeftInverse]
   right_inv := by simp [Function.RightInverse, Function.LeftInverse]
 
-abbrev heaplangEH {GE GR} : EHandler heaplangE GE GR (HeaplangState GE GR) :=
-  isoEH (HeaplangStateIso GE GR) (concEH (GE:=GE) (GR:=GR) ⊕ₑₕ (heapEH Loc Val ⊕ₛₑₕ failEH ⊕ₛₑₕ demonicEH (List Loc)).toEHandler)
+abbrev heaplangEH {GE GR} : EHandler heaplangE GE GR (HeaplangState (ITree GE GR)) :=
+  isoEH (HeaplangStateIso (ITree GE GR)) (concEH ⊕ₑₕ (heapEH Loc Val ⊕ₛₑₕ failEH ⊕ₛₑₕ demonicEH Loc).toEHandler)
 
 /- TODO: define EHandlerBind -/
 -- instance {GE GR GR'} : EHandlerBind (GE:=GE) (GR:=GR) (GR':=GR')
   -- heaplangEH (failingEH ⊕ₑₕ (heapEH Loc Val ⊕ₛₑₕ failEH ⊕ₛₑₕ demonicEH (List Loc)).toEHandler) := inferInstanceAs (EHandlerBind (concEH ⊕ₑₕ _) _)
+
+abbrev heaplangM := StateT (ConcState ((n : Nat) × ITreeN heaplangE Val n)) (StateT (heapE.T Loc Val) (ExceptT String IO))
+
+instance : MonadEval heaplangM IO where
+  monadEval x := do
+    let r ← x |>.run (ConcState.new) |>.run ∅
+    match r with
+    | .ok v => return v.1.1
+    | .error msg => IO.ofExcept $ .error (s!"Evaluation failed: {msg}")
+
 
 def UnOp.denote (op : UnOp) (v : Val) : ITree heaplangE Val :=
   match op, v with
@@ -88,7 +98,7 @@ def BinOp.evalBool (op : BinOp) (b₁ b₂ : Bool) : Option BaseLit :=
 
 def BinOp.evalLoc (op : BinOp) (l₁ : Loc) (v₂ : BaseLit) : Option BaseLit :=
   match op, v₂ with
-  | .offset, .int off => some $ .loc (l₁.offset off)
+  | .offset, .int off => some $ .loc (l₁ + off)
   | .le, .loc l₂ => some $ .bool (decide (l₁.n ≤ l₂.n))
   | .lt, .loc l₂ => some $ .bool (decide (l₁.n < l₂.n))
   | _, _ => none
@@ -174,8 +184,12 @@ def Exp.denote (e : Exp) : ITree heaplangE Val :=
     let vn ← denoteYield e₁
     let n ← vn.int!
     if n ≤ 0 then fail "AllocN: count must be positive"
-    let ⟨ls, _⟩ ← HeapE.allocN (λ ls => ∃ l : Loc, ls = (List.range n.toNat).map λ n => l.offset (Int.ofNat n)) v
-    return .lit (.loc ls.head!)
+    let l ← HeapE.allocN n.toNat v (by
+      -- TODO: move this proof somewhere else?
+      intro l m;
+      simp [compare, compareOfLessAndEq, Ordering.isLE, instHAddLocInt];
+      grind)
+    return .lit (.loc l)
   | .free e => do
     let v ← denoteYield e
     let l ← v.loc!
