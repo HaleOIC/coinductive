@@ -159,9 +159,19 @@ theorem stail_mono β α [PartialOrder β] (f : β → Stream α) :
     simp [*]
     grind [CoInd.leN_le]
 
+def Stream.shead {α} (s : Stream α) : Option α :=
+  match s.unfold with
+  | .snil => none
+  | .scons hd _ => some hd
+
 def s3 : Stream Nat :=
   .scons 0 $ .scons 1 $ .stail s3
 partial_fixpoint
+
+theorem s3_head :
+  Stream.shead s3 = some 0 := by
+    unfold s3
+    simp [Stream.shead]
 
 def s3' : Stream Nat :=
   .stail s3'
