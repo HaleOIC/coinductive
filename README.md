@@ -2,7 +2,7 @@
 
 A Lean 4 library for coinductive types using polynomial functors. These coinductive types are then used to define interaction trees.
 
-NOTE: This library is in early development and thus incomplete and subject to change.
+**NOTE**: This library is in early development and thus incomplete and subject to change.
 
 ## Overview
 
