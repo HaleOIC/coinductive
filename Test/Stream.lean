@@ -176,3 +176,7 @@ theorem s3_head :
 def s3' : Stream Nat :=
   .stail s3'
 partial_fixpoint
+
+-- test universe polymorphism
+def univpoly : Stream PUnit.{u + 1} := .scons ⟨⟩ univpoly
+partial_fixpoint
