@@ -6,6 +6,11 @@ open ITree ITree.Effects ITree.Exec ITree.Eval
 
 namespace HeapLang
 
+-- test that we can evaluate looping programs
+/-- info: none -/
+#guard_msgs in
+#eval evalN heaplangM 10 hl((rec f x := f x) #1).denote
+
 /-- info: some (HeapLang.Val.lit (HeapLang.BaseLit.int 2)) -/
 #guard_msgs in
 #eval evalN heaplangM 10000 hl(#1 + #1).denote

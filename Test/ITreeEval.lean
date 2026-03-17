@@ -61,6 +61,30 @@ info: some 0
 #guard_msgs in
 #eval evalN (Lean.Elab.Command.CommandElabM) 20000 (print 10)
 
+def print_inf (n : Nat) : ITree (logE Nat) Empty :=
+  do log n; print_inf (n + 1)
+partial_fixpoint
+
+/--
+info: 0
+---
+info: 1
+---
+info: 2
+---
+info: 3
+---
+info: 4
+---
+info: none
+-/
+#guard_msgs in
+#eval evalN (Lean.Elab.Command.CommandElabM) 5 (print_inf 0)
+
+-- the following fails since the recursive occurrence is not under a lambda
+-- #guard_msgs in
+-- #eval evalN (Except String) 1 (ITree.spin (E:=failE) (R:=Empty))
+
 def test_state : ITree (stateE Nat ⊕ₑ failE) Nat := do
   set 0;
   let x ← get;
