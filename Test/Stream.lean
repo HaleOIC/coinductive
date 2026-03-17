@@ -170,13 +170,23 @@ def Stream.stake {α} (s : Stream α) : Nat → List α
            | .snil => []
            | .scons hd tl => hd::stake tl n
 
+def Stream.stakeN {α} (n : Nat) (s : CoIndN (StreamF α) n) : List α :=
+  match n with
+  | 0 => []
+  | n+1 => match s with
+           | .snil => []
+           | .scons hd tl => hd::stakeN n tl
+
+def Stream.stake_n {α} (s : Stream α) (n : Nat) : List α :=
+  Stream.stakeN n (s.approx n)
 
 def zeros : Stream Nat :=
   .scons 0 $ zeros
 partial_fixpoint
 
 -- The following crashes lean
--- #eval zeros.stake 1
+-- #eval zeros.stake 0
+-- #eval zeros.stake_n 1
 
 def s3 : Stream Nat :=
   .scons 0 $ .scons 1 $ .stail s3
