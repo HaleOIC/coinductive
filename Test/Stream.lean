@@ -164,6 +164,20 @@ def Stream.shead {α} (s : Stream α) : Option α :=
   | .snil => none
   | .scons hd _ => some hd
 
+def Stream.stake {α} (s : Stream α) : Nat → List α
+  | 0 => []
+  | n+1 => match s.unfold with
+           | .snil => []
+           | .scons hd tl => hd::stake tl n
+
+
+def zeros : Stream Nat :=
+  .scons 0 $ zeros
+partial_fixpoint
+
+-- The following crashes lean
+-- #eval zeros.stake 1
+
 def s3 : Stream Nat :=
   .scons 0 $ .scons 1 $ .stail s3
 partial_fixpoint
