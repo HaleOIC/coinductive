@@ -4,13 +4,18 @@ structure Effect : Type (u + 1) where
   I : Type u
   O : I → Type u
 
-def SumE (E₁ : Effect.{u}) (E₂ : Effect.{u}) : Effect.{u} where
+def sumE (E₁ : Effect.{u}) (E₂ : Effect.{u}) : Effect.{u} where
   I := E₁.I ⊕ E₂.I
   O
   | .inl i => E₁.O i
   | .inr i => E₂.O i
+infixr:30 " ⊕ₑ " => sumE
 
-infixr:30 " ⊕ₑ " => SumE
+@[simp] theorem sumE_O_inl {E₁ E₂ : Effect} (i : E₁.I) :
+    (E₁ ⊕ₑ E₂).O (.inl i) = E₁.O i := rfl
+
+@[simp] theorem sumE_O_inr {E₁ E₂ : Effect} (i : E₂.I) :
+    (E₁ ⊕ₑ E₂).O (.inr i) = E₂.O i := rfl
 
 class Subeffect (E₁ : Effect.{u}) (E₂ : Effect.{v}) where
   map : (i₁ : E₁.I) → ((i₂ : E₂.I) × (E₂.O i₂ → E₁.O i₁))
