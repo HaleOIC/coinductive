@@ -21,11 +21,24 @@ namespace HeapLang
 
 /-- info: some (HeapLang.Val.lit (HeapLang.BaseLit.unit)) -/
 #guard_msgs in
+#eval evalN heaplangM 10000 hl(let x := ref(#1); assert(!x = #1); let y := #1; x ← y * #2; assert(!x = y + #1)).denote
+
+/-- info: some (HeapLang.Val.lit (HeapLang.BaseLit.unit)) -/
+#guard_msgs in
 #eval evalN heaplangM 10000 hl(
   let x := ref(#0);
-  fork(x ← (!x + #1));
-  x ← (!x + #1);
+  fork(x ← !x + #1);
+  x ← !x + #1;
   assert(!x = #2)).denote
+
+-- show that there can be a data-race
+/-- info: some (HeapLang.Val.lit (HeapLang.BaseLit.unit)) -/
+#guard_msgs in
+#eval evalN heaplangM 10000 hl(
+  let x := ref(#0);
+  fork(#1; x ← !x + #1);
+  x ← !x + #1;
+  assert(!x = #1)).denote
 
 /- TODO: have a better simp set -/
 
