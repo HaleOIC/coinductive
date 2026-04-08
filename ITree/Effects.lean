@@ -1,6 +1,10 @@
+import ITree.Effects.Angelic
 import ITree.Effects.Conc
 import ITree.Effects.Demonic
+import ITree.Effects.Empty
 import ITree.Effects.Fail
+import ITree.Effects.Halt
 import ITree.Effects.Heap
 import ITree.Effects.Log
 import ITree.Effects.State
+import ITree.Effects.Step

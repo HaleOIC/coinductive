@@ -33,21 +33,23 @@ def Val.injR! [failE -< E] : Val → ITree E Val
   | .injR v => return v
   | x => fail s!"{reprStr x} is not InjR"
 
-abbrev heaplangE := concE ⊕ₑ heapE Loc Val ⊕ₑ failE ⊕ₑ demonicE Loc
+abbrev heaplangE := concE ⊕ₑ heapE Loc Val ⊕ₑ failE ⊕ₑ demonicE Loc ⊕ₑ stepE
 
-structure HeaplangState T where
+structure HeaplangState (T : Type) : Type where
   tp : ConcState T
   heap : heapE.T Loc Val
+  steps : Nat
+  steps_left : Nat
 
 @[simp]
-def HeaplangStateIso T : Iso (ConcState T × heapE.T Loc Val × PUnit × PUnit) (HeaplangState T) where
-  toFun x := ⟨x.1, x.2.fst⟩
-  invFun x := ⟨x.tp, x.heap, ⟨⟩, ⟨⟩⟩
+def HeaplangStateIso T : Iso (ConcState T × heapE.T Loc Val × PUnit × PUnit × (ULift Nat × ULift Nat)) (HeaplangState T) where
+  toFun x := ⟨x.1, x.2.fst, ULift.down x.2.2.2.2.1, ULift.down x.2.2.2.2.2⟩
+  invFun x := ⟨x.tp, x.heap, ⟨⟩, ⟨⟩, ⟨ULift.up x.steps, ULift.up x.steps_left⟩⟩
   left_inv := by simp [Function.LeftInverse]
   right_inv := by simp [Function.RightInverse, Function.LeftInverse]
 
-abbrev heaplangEH {GE GR} : EHandler heaplangE GE GR (HeaplangState (ITree GE GR)) :=
-  isoEH (HeaplangStateIso (ITree GE GR)) (concEH ⊕ₑₕ (heapEH Loc Val ⊕ₛₑₕ failEH ⊕ₛₑₕ demonicEH Loc).toEHandler)
+abbrev heaplangEH {GE GR} (nl : Nat → Nat) : EHandler heaplangE GE GR (HeaplangState (ITree GE GR)) :=
+  isoEH (HeaplangStateIso (ITree GE GR)) (concEH ⊕ₑₕ (heapEH Loc Val ⊕ₛₑₕ failEH ⊕ₛₑₕ demonicEH Loc ⊕ₛₑₕ stepEH nl).toEHandler)
 
 /- TODO: define EHandlerBind -/
 -- instance {GE GR GR'} : EHandlerBind (GE:=GE) (GR:=GR) (GR':=GR')
@@ -136,48 +138,62 @@ def Exp.denote (e : Exp) : ITree heaplangE Val :=
   match e with
   | .val v => return v
   | .var x => fail s!"Unbound variable {reprStr x}"
-  | .rec_ f x e => return .rec_ f x e
+  | .rec_ f x e => do step; return .rec_ f x e
   | .app e₁ e₂ => do
     let v ← denoteYield e₂
     let f ← denoteYield e₁
     let ⟨f', x', e⟩ ← f.rec!
     let body := e.subst f' f |>.subst x' v
+    step
     body.yieldIfNotVal
     denote body
   | .unop op e => do
     let v ← denoteYield e
-    op.denote v
+    let r ← op.denote v
+    step
+    return r
   | .binop op e₁ e₂ => do
     let v₂ ← denoteYield e₂
     let v₁ ← denoteYield e₁
-    op.denote v₁ v₂
+    let r ← op.denote v₁ v₂
+    step
+    return r
   | .if e₀ e₁ e₂ => do
     let c ← denoteYield e₀
     if ← c.bool! then
+      step
       denoteYield e₁
     else
+      step
       denoteYield e₂
   | .pair e₁ e₂ => do
     let v₂ ← denoteYield e₂
     let v₁ ← denoteYield e₁
+    step
     return .pair v₁ v₂
   | .fst e => do
     let v ← denoteYield e
-    return (← v.pair!).1
+    let p ← v.pair!
+    step
+    return p.1
   | .snd e => do
     let v ← denoteYield e
-    return (← v.pair!).2
+    let p ← v.pair!
+    step
+    return p.2
   | .injL e => do
     let v ← denoteYield e
+    step
     return .injL v
   | .injR e => do
     let v ← denoteYield e
+    step
     return .injR v
   | .case e₀ e₁ e₂ => do
     let v ← denoteYield e₀
     match v with
-    | .injL w => yield; denote (.app e₁ (.val w))
-    | .injR w => yield; denote (.app e₂ (.val w))
+    | .injL w => step; yield; denote (.app e₁ (.val w))
+    | .injR w => step; yield; denote (.app e₂ (.val w))
     | _ => fail "Case: not a sum value"
   | .allocN e₁ e₂ => do
     let v ← denoteYield e₂
@@ -189,20 +205,25 @@ def Exp.denote (e : Exp) : ITree heaplangE Val :=
       intro l m;
       simp [compare, compareOfLessAndEq, Ordering.isLE, instHAddLocInt];
       grind)
+    step
     return .lit (.loc l)
   | .free e => do
     let v ← denoteYield e
     let l ← v.loc!
     let .some _ ← storeOpt (Val:=Val) l none
       | fail "free: location not allocated"
+    step
     return .lit .unit
   | .load e => do
     let v ← denoteYield e
-    load! (← v.loc!)
+    let r ← load! (← v.loc!)
+    step
+    return r
   | .store e₁ e₂ => do
     let v₂ ← denoteYield e₂
     let v₁ ← denoteYield e₁
     let _ ← store! (← v₁.loc!) v₂
+    step
     return .lit .unit
   | .cmpXchg e₀ e₁ e₂ => do
     let v₂ ← denoteYield e₂
@@ -214,13 +235,17 @@ def Exp.denote (e : Exp) : ITree heaplangE Val :=
       fail "CmpXchg: comparing boxed values"
     if vl = v₁ then
       let _ ← store! l v₂
+      step
       return .pair vl (.lit (.bool true))
     else
+      step
       return .pair vl (.lit (.bool false))
   | .xchg e₁ e₂ => do
     let v₂ ← denoteYield e₂
     let v₁ ← denoteYield e₁
-    store! (← v₁.loc!) v₂
+    let r ← store! (← v₁.loc!) v₂
+    step
+    return r
   | .faa e₁ e₂ => do
     let v₂ ← denoteYield e₂
     let v₁ ← denoteYield e₁
@@ -229,9 +254,11 @@ def Exp.denote (e : Exp) : ITree heaplangE Val :=
     let old ← load! l
     let i₁ ← old.int!
     let _ ← store! l (.lit (.int (i₁ + i₂)) : Val)
+    step
     return old
   | .fork e => do
     let _ ← ConcE.fork (denoteYield e >>= λ _ => return ⟨⟩)
+    step
     return .lit .unit
   | .newProph => do
     fail "prophecy is not implemented"
