@@ -28,6 +28,10 @@ instance : HAdd Loc Int Loc where
 instance : Zero Loc where
   zero := ⟨0⟩
 
+@[simp]
+theorem loc_add_n (l : Loc) n :
+  (l + n).n = l.n + n := by simp [HAdd.hAdd]
+
 @[ext]
 structure ProphId where
   private mk ::

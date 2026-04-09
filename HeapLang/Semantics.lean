@@ -202,8 +202,8 @@ def Exp.denote (e : Exp) : ITree heaplangE Val :=
     if n ≤ 0 then fail "AllocN: count must be positive"
     let l ← HeapE.allocN n.toNat v (by
       -- TODO: move this proof somewhere else?
-      intro l m;
-      simp [compare, compareOfLessAndEq, Ordering.isLE, instHAddLocInt];
+      intro l m
+      simp [compare, compareOfLessAndEq, Ordering.isLE]
       grind)
     step
     return .lit (.loc l)

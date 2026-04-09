@@ -464,18 +464,19 @@ theorem exec_interp_2 σ σ₁ σ₂ E' GR (t : ITree (E₁ ⊕ₑ E') GR) p s s
       simp at hh
       sorry
     · unfold ITree.trigger
-      simp
-      apply exec.F.step
-      rw (occs:=[1]) [sumEH]
-      simp
-      apply EHandler.handle_mono
-      . apply ehp.handle_rel
-        . assumption
-        . intro o; rfl
-        . assumption
-      intro _ _ _
-      apply exec.stop
-      grind
+      sorry
+      -- simp
+      -- apply exec.F.step
+      -- rw (occs:=[1]) [sumEH]
+      -- simp
+      -- apply EHandler.handle_mono
+      -- . apply ehp.handle_rel
+        -- . assumption
+        -- . intro o; rfl
+        -- . assumption
+      -- intro _ _ _
+      -- apply exec.stop
+      -- grind
 
 
 end interp
