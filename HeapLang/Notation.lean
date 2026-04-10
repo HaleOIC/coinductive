@@ -110,8 +110,8 @@ syntax:100 "injr(" hl_exp ")" : hl_exp
 syntax:100 "allocn(" hl_exp ", " hl_exp ")" : hl_exp
 syntax:100 "ref(" hl_exp ")" : hl_exp
 syntax:100 "free(" hl_exp ")" : hl_exp
-syntax:80 "!" hl_exp:80 : hl_exp
-syntax:80 hl_exp:80 " ← " hl_exp:80 : hl_exp
+syntax:75 "!" hl_exp:75 : hl_exp
+syntax:15 hl_exp:16 " ← " hl_exp:15 : hl_exp
 syntax:100 "cmpXchg(" hl_exp ", " hl_exp ", " hl_exp ")" : hl_exp
 syntax:100 "xchg(" hl_exp ", " hl_exp ")" : hl_exp
 syntax:100 "faa(" hl_exp ", " hl_exp ")" : hl_exp
@@ -582,7 +582,7 @@ set_option pp.explicit true in
 /--
 info: hl(let x := ref(#0);
     let y := allocn(!x, #0);
-      (x ← !x + #1); fork(cmpXchg(x, #1, #2); xchg(x, #2); faa(x, #4)); assert((!x = #0)); free(x)) : Exp
+      x ← (!x + #1); fork(cmpXchg(x, #1, #2); xchg(x, #2); faa(x, #4)); assert((!x = #0)); free(x)) : Exp
 -/
 #guard_msgs in
 #check hl(let x := ref(#0); let y := allocn(!x, #0); x ← !x + #1; fork(cmpXchg(x, #1, #2); xchg(x, #2); faa(x, #4)); assert(!x = #0); free(x))
@@ -610,8 +610,9 @@ info: (Exp.rec_ Binder.anon (Binder.named "x")
                           (Exp.val (Val.lit (@OfNat.ofNat BaseLit (nat_lit 1) (@instOfNatBaseLit (nat_lit 1)))))
                           (Exp.val
                             (Val.lit (@OfNat.ofNat BaseLit (nat_lit 2) (@instOfNatBaseLit (nat_lit 2))))))).fork)).app
-              (Exp.binop BinOp.plus ((Exp.var "x").store (Exp.var "x").load)
-                (Exp.val (Val.lit (@OfNat.ofNat BaseLit (nat_lit 1) (@instOfNatBaseLit (nat_lit 1)))))))).app
+              ((Exp.var "x").store
+                (Exp.binop BinOp.plus (Exp.var "x").load
+                  (Exp.val (Val.lit (@OfNat.ofNat BaseLit (nat_lit 1) (@instOfNatBaseLit (nat_lit 1))))))))).app
         ((Exp.var "x").load.allocN
           (Exp.val (Val.lit (@OfNat.ofNat BaseLit (nat_lit 0) (@instOfNatBaseLit (nat_lit 0)))))))).app
   ((Exp.val (Val.lit (@OfNat.ofNat BaseLit (nat_lit 1) (@instOfNatBaseLit (nat_lit 1))))).allocN

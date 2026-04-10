@@ -1,0 +1,33 @@
+import ITree.Effect
+import ITree.Definition
+import ITree.Exec
+
+namespace ITree.Effects
+
+def angelicE (α : Type u) : Effect.{u} where
+  I := (α → Prop)
+  O p := {a // p a}
+
+def AngelicE.choose_angelic {α : Type u} {E : Effect.{u}} [angelicE α -< E] (p : α → Prop) : ITree E {a // p a} :=
+  .trigger (angelicE α) p
+export AngelicE (choose_angelic)
+
+section exec
+open ITree.Exec
+
+def angelicEH (α : Type _) : SEHandler (angelicE α) PUnit where
+  handle i s p := ∃ x, ∃ (h : i x), p ⟨_, h⟩ s
+  handle_mono := by grind
+
+theorem exec_choose_angelic {α : Type u} {GE : Effect.{u}} {GR σ p q s}
+    {k : {x : α // q x} → ITree GE GR} x h [angelicE α -< GE]
+    (eh : EHandler GE GE GR σ) [hin : InEH (angelicEH α).toEHandler eh]
+    : (exec eh (k ⟨x, h⟩) s p) →
+      exec eh (choose_angelic q >>= k) s p := by
+  intro he; unfold choose_angelic
+  apply exec.dup
+  apply exec.trigger (angelicEH α).toEHandler
+  simp_all [angelicEH]
+  exists ?_, ?_ <;> try assumption
+
+end exec

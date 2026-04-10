@@ -21,37 +21,85 @@ namespace HeapLang
 
 /-- info: some (HeapLang.Val.lit (HeapLang.BaseLit.unit)) -/
 #guard_msgs in
+#eval evalN heaplangM 10000 hl(let x := ref(#1); assert(!x = #1); let y := #1; x ← y * #2; assert(!x = y + #1)).denote
+
+/-- info: some (HeapLang.Val.lit (HeapLang.BaseLit.unit)) -/
+#guard_msgs in
 #eval evalN heaplangM 10000 hl(
   let x := ref(#0);
-  fork(x ← (!x + #1));
-  x ← (!x + #1);
+  fork(x ← !x + #1);
+  x ← !x + #1;
   assert(!x = #2)).denote
+
+-- show that there can be a data-race
+/-- info: some (HeapLang.Val.lit (HeapLang.BaseLit.unit)) -/
+#guard_msgs in
+#eval evalN heaplangM 10000 hl(
+  let x := ref(#0);
+  fork(#1; x ← !x + #1);
+  x ← !x + #1;
+  assert(!x = #1)).denote
 
 /- TODO: have a better simp set -/
 
 example s :
-  exec heaplangEH hl(#1 + #1).denote s λ t _ => t = return (.lit $ .int 2) := by
-    simp [Exp.denote, Exp.isVal, BinOp.denote, BinOp.evalInt]
+  exec (heaplangEH λ _ => 0) hl(#1 + #1).denote s λ t _ => t = return (.lit $ .int 2) := by
+    simp [Exp.denote, Exp.isVal, BinOp.denote, BinOp.evalInt, -bind_pure_comp]
+    apply exec_step_0
+    simp [-bind_pure_comp]
     apply exec.stop
     simp
 
 example tp heap :
-  exec heaplangEH hl(let x := #1; x + #1).denote ⟨tp, heap⟩ λ t _ => t = return (.lit $ .int 2) := by
+  exec (heaplangEH λ _ => 0) hl(let x := #1; x + #1).denote ⟨tp, heap, 0, 0⟩ λ t _ => t = return (.lit $ .int 2) := by
     simp [Exp.denote, Exp.isVal, Exp.subst, Exp.substStr, yieldAfter, Exp.yieldIfNotVal, Val.rec!, BinOp.denote, BinOp.evalInt, -bind_pure_comp]
+    apply exec_step_0
+    simp [-bind_pure_comp]
     apply exec_yield_same
+    apply exec_step_0
+    simp [-bind_pure_comp]
     apply exec_yield_same
+    apply exec_step_0
+    simp [-bind_pure_comp]
+    apply exec.stop
+    simp
+
+example tp heap :
+  exec (heaplangEH λ _ => 1) hl(let x := #1; x + #1).denote ⟨tp, heap, 0, 3⟩ λ t _ => t = return (.lit $ .int 2) := by
+    simp [Exp.denote, Exp.isVal, Exp.subst, Exp.substStr, yieldAfter, Exp.yieldIfNotVal, Val.rec!, BinOp.denote, BinOp.evalInt, -bind_pure_comp]
+    apply exec_step (λ _ => 1)
+    · simp
+    simp [-bind_pure_comp]
+    apply exec_yield_same
+    apply exec_step (λ _ => 1)
+    · simp
+    simp [-bind_pure_comp]
+    apply exec_yield_same
+    apply exec_step (λ _ => 1)
+    · simp
+    simp [-bind_pure_comp]
     apply exec.stop
     simp
 
 -- set_option pp.explicit true in
 example tp heap :
-  exec heaplangEH hl(let x := #1; assert(x + #1 = #2)).denote ⟨tp, heap⟩ λ t _ => t = return (.lit $ .unit) := by
+  exec (heaplangEH  λ _ => 0) hl(let x := #1; assert(x + #1 = #2)).denote ⟨tp, heap, 0, 0⟩ λ t _ => t = return (.lit $ .unit) := by
     simp [Exp.denote, Exp.assert, Val.compareSafe, Val.isUnboxed, BaseLit.isUnboxed, Val.bool!, Exp.isVal, Exp.subst, Exp.substStr, yieldAfter, Exp.yieldIfNotVal, Val.rec!, BinOp.denote, BinOp.evalInt, -bind_pure_comp]
+    apply exec_step_0
+    simp [-bind_pure_comp]
     apply exec_yield_same
+    apply exec_step_0
+    simp [-bind_pure_comp]
     apply exec_yield_same
+    apply exec_step_0
+    simp [-bind_pure_comp]
     apply exec_yield_same
+    apply exec_step_0
+    simp [-bind_pure_comp]
     apply exec_yield_same
     unfold instOfNatBaseLit
-    simp
+    simp [-bind_pure_comp]
+    apply exec_step_0
+    simp [-bind_pure_comp]
     apply exec.stop
     simp

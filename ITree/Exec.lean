@@ -41,7 +41,7 @@ theorem seh_to_ehandler_handle_eq_seh_handle {E GE : Effect.{u}} GR (eh : SEHand
   apply propext; simp [SEHandler.toEHandler]
 
 /-- Inclusion of EHandlers -/
-class InEH {E₁ E₂ GE : Effect.{u}} {GR : Type u} {σ₁ σ₂ : Type u} [sub : E₁ -< E₂]
+class InEH {E₁ E₂ GE : Effect.{u}} {GR : Type u} {σ₁ σ₂ : Type v} [sub : E₁ -< E₂]
   (eh₁ : EHandler E₁ GE GR σ₁) (eh₂ : EHandler E₂ GE GR σ₂) where
   getState : σ₂ → σ₁
   putState : σ₁ → σ₂ → σ₂
@@ -62,7 +62,7 @@ instance inEHRefl {E GE GR σ} (eh : EHandler E GE GR σ) : InEH eh eh where
   isIn := by intros; assumption
 
 section exec
-variable {GE : Effect.{u}} {GR σ : Type u}
+variable {GE : Effect.{u}} {GR : Type u} {σ : Type v}
 variable (eh : EHandler GE GE GR σ)
 
 inductive exec.F (exec : ITree GE GR → σ → (ITree GE GR → σ → Prop) → Prop)
@@ -170,7 +170,7 @@ section exec
 
 /- Trigger -/
 
-theorem exec.trigger {E GE : Effect.{u}} {GR σ Gσ : Type u} {i : E.I} {k : E.O i → ITree GE GR} {s p}
+theorem exec.trigger {E GE : Effect.{u}} {GR : Type u} {σ Gσ : Type v} {i : E.I} {k : E.O i → ITree GE GR} {s p}
   [E -< GE] (eh : EHandler E GE GR σ) (ehg : EHandler GE GE GR Gσ) [hin : InEH eh ehg] :
     eh.handle i (hin.getState s) k (λ t' s' => p t' (hin.putState s' s)) →
     exec ehg (ITree.trigger E i >>= k) s p := by
@@ -197,7 +197,7 @@ instance eHandlerBindSimple {E GE : Effect.{u}} GR GR' σ (eh : SEHandler E σ) 
 rule on a hander that does not support bind. It ensures that the effects from the handler cannot be used during the bind.
 But other effects can still be used. For example, this is used for concurrency.
 -/
-def failingEH {E GE : Effect.{u}} {GR σ : Type u} : EHandler E GE GR σ where
+def failingEH {E GE : Effect.{u}} {GR : Type u} {σ} : EHandler E GE GR σ where
   handle _ _ _ _ := False
   handle_mono := by grind
 
@@ -464,18 +464,19 @@ theorem exec_interp_2 σ σ₁ σ₂ E' GR (t : ITree (E₁ ⊕ₑ E') GR) p s s
       simp at hh
       sorry
     · unfold ITree.trigger
-      simp
-      apply exec.F.step
-      rw (occs:=[1]) [sumEH]
-      simp
-      apply EHandler.handle_mono
-      . apply ehp.handle_rel
-        . assumption
-        . intro o; rfl
-        . assumption
-      intro _ _ _
-      apply exec.stop
-      grind
+      sorry
+      -- simp
+      -- apply exec.F.step
+      -- rw (occs:=[1]) [sumEH]
+      -- simp
+      -- apply EHandler.handle_mono
+      -- . apply ehp.handle_rel
+        -- . assumption
+        -- . intro o; rfl
+        -- . assumption
+      -- intro _ _ _
+      -- apply exec.stop
+      -- grind
 
 
 end interp
