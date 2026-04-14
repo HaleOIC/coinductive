@@ -1,3 +1,6 @@
+module
+
+@[expose] public section
 namespace HeapLang
 
 @[ext]
@@ -34,8 +37,8 @@ theorem loc_add_n (l : Loc) n :
 
 @[ext]
 structure ProphId where
-  private mk ::
-  private n : Nat
+  mk ::
+  n : Nat
 deriving Inhabited, Repr, DecidableEq
 
 inductive Binder where

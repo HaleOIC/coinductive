@@ -1,5 +1,10 @@
-import Coinductive
-import ITree.Effect
+module
+
+-- TODO: can we make this a non-public import and hide all CoInd things from clients of this?
+public import Coinductive
+public import ITree.Effect
+
+@[expose] public section
 
 namespace ITree
 open Coinductive Lean.Order
@@ -189,7 +194,7 @@ theorem ITree.le_unfold (t1 t2 : ITree E R) :
         grind
 
 -- use Bind.bind instead
-private def ITree.bind {S} (t1 : ITree E R) (t2 : R → ITree E S) :=
+def ITree.bind {S} (t1 : ITree E R) (t2 : R → ITree E S) :=
   match t1.unfold with
   | .ret r => t2 r
   | .tau t => .tau (ITree.bind t t2)

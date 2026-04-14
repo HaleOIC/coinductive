@@ -1,6 +1,9 @@
-import ITree
-import HeapLang.Lang
+module
 
+public import ITree
+public import HeapLang.Lang
+
+@[expose] public section
 namespace HeapLang
 
 open ITree ITree.Effects ITree.Exec

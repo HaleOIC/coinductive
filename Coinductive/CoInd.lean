@@ -1,4 +1,8 @@
+module
+
 namespace Coinductive
+
+@[expose] public section
 
 /-!
 # Coinductive Types via Polynomial Functors

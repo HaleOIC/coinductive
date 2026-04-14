@@ -1,8 +1,11 @@
-import ITree.Effect
-import ITree.Definition
-import ITree.Eval
-import ITree.Exec
+module
 
+public import ITree.Effect
+public import ITree.Definition
+public import ITree.Eval
+public import ITree.Exec
+
+@[expose] public section
 namespace ITree.Effects
 
 def stateE (α : Type u) : Effect.{u} where

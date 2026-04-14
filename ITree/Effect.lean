@@ -1,3 +1,7 @@
+module
+
+@[expose] public section
+
 namespace ITree
 
 structure Effect : Type (u + 1) where

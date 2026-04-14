@@ -1,1 +1,3 @@
-import Coinductive.CoInd
+module
+
+public import Coinductive.CoInd

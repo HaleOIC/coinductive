@@ -1,8 +1,9 @@
-import ITree.Effect
-import ITree.Definition
-import ITree.Eval
-import ITree.Exec
+module
 
+public import ITree.Effect
+public import ITree.Definition
+
+@[expose] public section
 namespace ITree.Effects
 
 def emptyE : Effect.{u} where
