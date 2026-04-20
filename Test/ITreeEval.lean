@@ -1,5 +1,8 @@
+module
+
 import Lean
 import ITree
+meta import ITree
 
 namespace Test
 open ITree ITree.Effects ITree.Eval

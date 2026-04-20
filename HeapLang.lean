@@ -1,4 +1,6 @@
-import HeapLang.Lang
-import HeapLang.Notation
-import HeapLang.Semantics
-import HeapLang.Examples
+module
+
+public import HeapLang.Lang
+public import HeapLang.Notation
+public import HeapLang.Semantics
+public import HeapLang.Examples

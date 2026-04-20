@@ -1,5 +1,7 @@
-import ITree.Definition
-import ITree.Effect
-import ITree.Effects
-import ITree.Exec
-import ITree.Eval
+module
+
+public import ITree.Definition
+public import ITree.Effect
+public import ITree.Effects
+public import ITree.Exec
+public import ITree.Eval

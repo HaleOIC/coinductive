@@ -1,6 +1,8 @@
-import Lean.PrettyPrinter.Delaborator
-import HeapLang.Lang
+module
 
+public import HeapLang.Lang
+
+public meta section
 namespace HeapLang
 
 open Lean Lean.PrettyPrinter Elab Parser

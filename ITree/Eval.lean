@@ -1,5 +1,8 @@
-import ITree.Definition
+module
 
+public import ITree.Definition
+
+@[expose] public section
 namespace ITree.Eval
 
 class MHandler (E : Effect.{u}) (T : Type u) (m : Type u → Type u) [Monad m] where

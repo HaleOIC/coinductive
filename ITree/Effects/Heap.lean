@@ -1,10 +1,13 @@
-import ITree.Effect
-import ITree.Definition
-import ITree.Effects.Demonic
-import ITree.Effects.Fail
-import ITree.Effects.State
-import Std.Data.ExtTreeMap
+module
 
+public import ITree.Effect
+public import ITree.Definition
+public import ITree.Effects.Demonic
+public import ITree.Effects.Fail
+public import ITree.Effects.State
+public import Std.Data.ExtTreeMap
+
+@[expose] public section
 namespace ITree.Effects
 
 

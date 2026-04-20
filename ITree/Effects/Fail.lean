@@ -1,8 +1,11 @@
-import ITree.Effect
-import ITree.Definition
-import ITree.Exec
-import ITree.Eval
+module
 
+public import ITree.Effect
+public import ITree.Definition
+public import ITree.Exec
+public import ITree.Eval
+
+@[expose] public section
 namespace ITree.Effects
 
 def failE : Effect.{u} where

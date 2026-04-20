@@ -1,5 +1,8 @@
-import ITree.Definition
+module
 
+public import ITree.Definition
+
+@[expose] public section
 namespace ITree.Exec
 
 /--

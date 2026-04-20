@@ -1,5 +1,10 @@
+module
+
 import HeapLang.Lang
-import HeapLang.Semantics
+-- This meta import is important such that lake build works
+-- otherwise one gets a "Could not find native implementation of external declaration" error
+meta import HeapLang.Lang
+meta import HeapLang.Semantics
 import HeapLang.Notation
 
 open ITree ITree.Effects ITree.Exec ITree.Eval

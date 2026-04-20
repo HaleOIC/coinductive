@@ -1,6 +1,10 @@
-import ITree.Effect
-import ITree.Definition
-import ITree.Exec
+module
+
+public import ITree.Effect
+public import ITree.Definition
+public import ITree.Exec
+
+@[expose] public section
 
 namespace ITree.Effects
 
