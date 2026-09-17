@@ -70,7 +70,7 @@ theorem Stream.le_unfold α (s1 s2 : Stream α) :
     · intro h
       rw [CoInd.le_unfold] at h
       rcases h with (rfl|⟨i, _, _, _, _, h1, h2⟩); simp
-      rw [<-unfold_fold _ s1, <-unfold_fold _ s2]
+      rw [<-fold_unfold _ s1, <-fold_unfold _ s2]
       rw [<-PF.unpack_pack s1.unfold, <-PF.unpack_pack s2.unfold]
       simp only [h1, h2]
       cases i <;> simp [PF.pack, snil, scons, fold]
