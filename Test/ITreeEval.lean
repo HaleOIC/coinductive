@@ -92,7 +92,7 @@ info: none
 def test_state : ITree (stateE Nat ⊕ₑ failE) Nat := do
   set 0;
   let x ← get;
-  assert (x = 0)
+  FailE.assert (x = 0)
   return x
 
 local instance : MonadEval (StateT Nat (Except String)) IO where
@@ -122,7 +122,7 @@ def test_race : ITree raceE Nat := do
   fork (do let x ← get; yield; set (x + 1); yield)
   let x ← get; yield; set (x + 1); yield;
 
-  let x' ← get; yield; assert (x' = 2); yield;
+  let x' ← get; yield; FailE.assert (x' = 2); yield;
   return x'
 
 def test_race_ok : ITree (stateE Nat ⊕ₑ concE ⊕ₑ failE) Nat := do
@@ -130,7 +130,7 @@ def test_race_ok : ITree (stateE Nat ⊕ₑ concE ⊕ₑ failE) Nat := do
   fork (do let x ← get; yield; set (x + 1); yield)
   let x ← get; yield; set (x + 1); yield;
 
-  let x' ← get; yield; assert (x' = 1); yield;
+  let x' ← get; yield; FailE.assert (x' = 1); yield;
   return x'
 
 def test_race_ok2 : ITree (stateE Nat ⊕ₑ concE ⊕ₑ failE) Nat := do
@@ -138,7 +138,7 @@ def test_race_ok2 : ITree (stateE Nat ⊕ₑ concE ⊕ₑ failE) Nat := do
   fork (do let x ← get; yield; set (x + 1); yield)
   yield; yield; let x ← get; yield; set (x + 1); yield;
 
-  let x' ← get; yield; assert (x' = 2); yield;
+  let x' ← get; yield; FailE.assert (x' = 2); yield;
   return x'
 
 
