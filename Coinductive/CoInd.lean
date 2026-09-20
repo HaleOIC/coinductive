@@ -192,9 +192,10 @@ def CoInd.unfold (x : CoInd F) : F (CoInd F) :=
       apply coherent_eq_k <;> assumption
   }
 
-/-- `unfold` is a left inverse of `fold`. -/
+/-- `fold` is a left inverse of `unfold`. Together with `unfold_fold`, this shows
+`fold` and `unfold` are inverse isomorphisms, i.e. `CoInd F ≅ F (CoInd F)`. -/
 @[simp]
-theorem unfold_fold x :
+theorem fold_unfold x :
     CoInd.fold F (CoInd.unfold F x) = x := by
   ext n
   cases n with
@@ -211,10 +212,9 @@ theorem unfold_fold x :
   rw [<-h]
   simp
 
-/-- `fold` is a left inverse of `unfold`. Together with `unfold_fold`, this shows
-`fold` and `unfold` are inverse isomorphisms, i.e. `CoInd F ≅ F (CoInd F)`. -/
+/-- `unfold` is a left inverse of `fold`. -/
 @[simp]
-theorem fold_unfold x :
+theorem unfold_fold x :
     CoInd.unfold F (CoInd.fold F x) = x := by
   simp [CoInd.unfold, CoInd.fold]
   split
@@ -317,7 +317,7 @@ theorem CoInd.le.coherent_bot_eq [Inhabited (F PUnit)] c :
   ext n
   induction n generalizing c h; rfl
   rw [CoInd.bot_eq]
-  rw [<-unfold_fold _ c, CoInd.fold_approx]
+  rw [<-fold_unfold _ c, CoInd.fold_approx]
   simp [CoInd.fold_approx]
   rw [CoInd.bot_eq] at h
   simp at h
@@ -379,8 +379,8 @@ instance [Inhabited (F PUnit)] : PartialOrder (CoInd F) where
     rename (_ ∧ _) => eq
     cases eq
     subst_eqs
-    rw [<-unfold_fold _ c1]
-    rw [<-unfold_fold _ c2]
+    rw [<-fold_unfold _ c1]
+    rw [<-fold_unfold _ c2]
     unfold CoInd.fold
     simp [PF.map, *]
     grind
