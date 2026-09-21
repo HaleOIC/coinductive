@@ -370,4 +370,55 @@ theorem interp_vis {F} (f : (i : E.I) → ITree F (E.O i)) i (k : E.O i → ITre
     rw (occs := [1]) [ITree.iter]
     simp
 
+/-- Interpreting each event with `trigger` leaves the interaction tree unchanged. -/
+@[simp]
+theorem interp_trigger_identity (t : ITree E R) :
+    ITree.interp (λ i => E.trigger i) t = t := by
+  ext n
+  induction n generalizing t with
+  | zero => rfl
+  | succ n ih =>
+    cases t <;> simp [ih]
+    simp [Effect.trigger]
+    congr; funext o
+    apply ih
+
+section interp_inverse
+
+variable {E1 E2} [Hsub: E1 -< E2] {t : ITree E1 R}
+
+/-- If interpreting every event as a trigger yields `pure r`, the original tree is `pure r`. -/
+theorem interp_pure_inv {r : R} :
+    ITree.interp (λ i => (E1.trigger i : ITree E2 (E1.O i))) t = pure r →
+    t = pure r := by
+  intro h
+  cases t <;> simp only [Effect.trigger] at h ⊢
+    <;> have h' := congrArg ITree.unfold h
+    <;> simp at h'
+  subst h'; rfl
+
+/-- If interpreting every event as a trigger yields `tau u`, the original tree has a matching `tau` step. -/
+theorem interp_tau_inv {u : ITree E2 R} :
+    ITree.interp (λ i => (E1.trigger i : ITree E2 (E1.O i))) t = u.tau →
+    ∃ t', t = t'.tau ∧ ITree.interp (λ i => (E1.trigger i : ITree E2 (E1.O i))) t' = u := by
+  intro h
+  cases t <;> simp [Effect.trigger] at h ⊢
+    <;> have h' := congrArg ITree.unfold h
+    <;> simp at h'
+  exact ⟨_, rfl, h'⟩
+
+/-- If interpreting every event as a trigger yields `vis i k`, the original tree has the corresponding visible event and continuation. -/
+theorem interp_vis_inv {i : E2.I} {k : E2.O i → ITree E2 R} :
+    ITree.interp (λ i => (E1.trigger i : ITree E2 (E1.O i))) t = ITree.vis i k →
+    ∃ (i' : E1.I) (k' : E1.O i' → ITree E1 R),
+      t = ITree.vis i' k' ∧ i = (Hsub.map i').fst ∧
+      HEq k (λ x => ITree.interp (λ i => (E1.trigger i : ITree E2 (E1.O i))) (k' ((Hsub.map i').snd x))) := by
+  intro h
+  cases t <;> simp [Effect.trigger] at h ⊢
+    <;> have h' := congrArg ITree.unfold h
+    <;> simp at h'
+  exact ⟨_, _, rfl, h'.1.symm, h'.2.symm⟩
+
+end interp_inverse
+
 end ITree
