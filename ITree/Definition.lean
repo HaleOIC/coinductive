@@ -166,7 +166,7 @@ theorem ITree.le_unfold (t1 t2 : ITree E R) :
     · intro h
       rw [CoInd.le_unfold] at h
       rcases h with (rfl|⟨i, _, _, _, _, h1, h2⟩); simp
-      rw [<-Coinductive.unfold_fold _ t1, <-Coinductive.unfold_fold _ t2]
+      rw [<-fold_unfold _ t1, <-fold_unfold _ t2]
       rw [<-PF.unpack_pack (CoInd.unfold _ t1), <-PF.unpack_pack (CoInd.unfold _ t2)]
       simp only [h1, h2]
       right
