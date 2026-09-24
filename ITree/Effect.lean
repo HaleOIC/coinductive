@@ -13,13 +13,13 @@ structure Effect : Type (u + 1) where
 -- arguments are checked for defeq, without exposing `SumE` to type class search.
 -- All `Effect` definitions follow the same pattern.
 @[implicit_reducible]
-def SumE (E₁ : Effect.{u}) (E₂ : Effect.{u}) : Effect.{u} where
+def sumE (E₁ : Effect.{u}) (E₂ : Effect.{u}) : Effect.{u} where
   I := E₁.I ⊕ E₂.I
   O
   | .inl i => E₁.O i
   | .inr i => E₂.O i
 
-infixr:30 " ⊕ₑ " => SumE
+infixr:30 " ⊕ₑ " => sumE
 
 -- we cannot make `SumE` reducible since we want to key on it in TC search,
 -- but we also need to make sure that SumE.O reduces at reducible transparency
